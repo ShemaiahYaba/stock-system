@@ -1,0 +1,90 @@
+<?php
+// Update record controller
+
+require_once __DIR__ . '/../../../config/db.php';
+require_once __DIR__ . '/../../../config/constants.php';
+require_once __DIR__ . '/../../../models/record.php';
+require_once __DIR__ . '/../../../utils/helpers.php';
+require_once __DIR__ . '/../../../utils/authMiddleware.php';
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+checkAuth();
+
+$recordModel = new Record($conn);
+
+/**
+ * Handle record update
+ */
+function handleUpdateRecord($recordModel) {
+    $errors = [];
+    
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update') {
+        $id = intval($_POST['id'] ?? 0);
+        $color = sanitize($_POST['color'] ?? '');
+        $netWeight = sanitize($_POST['net_weight'] ?? '');
+        $gauge = sanitize($_POST['gauge'] ?? '');
+        $salesStatus = sanitize($_POST['sales_status'] ?? '');
+        $noOfMeters = sanitize($_POST['no_of_meters'] ?? '');
+        
+        // Validation
+        if ($id <= 0) {
+            $errors[] = 'Invalid record ID';
+        }
+        
+        if (empty($color)) {
+            $errors[] = 'Color is required';
+        }
+        
+        if (empty($netWeight) || !is_numeric($netWeight)) {
+            $errors[] = 'Valid net weight is required';
+        }
+        
+        if (empty($gauge)) {
+            $errors[] = 'Gauge is required';
+        }
+        
+        if (empty($salesStatus)) {
+            $errors[] = 'Sales status is required';
+        }
+        
+        if (empty($noOfMeters) || !is_numeric($noOfMeters)) {
+            $errors[] = 'Valid number of meters is required';
+        }
+        
+        // Update if no errors
+        if (empty($errors)) {
+            $data = [
+                'color' => $color,
+                'net_weight' => $netWeight,
+                'gauge' => $gauge,
+                'sales_status' => $salesStatus,
+                'no_of_meters' => $noOfMeters
+            ];
+            
+            $result = $recordModel->update($id, getCurrentUserId(), $data);
+            
+            if ($result['success']) {
+                setFlash('Record updated successfully', FLASH_SUCCESS);
+                redirect('index.php?page=stockbook');
+            } else {
+                $errors[] = $result['message'];
+            }
+        }
+    }
+    
+    return $errors;
+}
+
+/**
+ * Get record for editing
+ */
+function getRecordForEdit($recordModel, $id) {
+    if ($id) {
+        return $recordModel->getById($id, getCurrentUserId());
+    }
+    return null;
+}
+?>
