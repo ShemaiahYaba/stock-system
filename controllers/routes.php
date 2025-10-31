@@ -14,7 +14,7 @@ checkAuth();
 $page = $_GET['page'] ?? 'dashboard';
 
 // Define allowed pages
-$allowedPages = ['dashboard', 'stockbook'];
+$allowedPages = ['dashboard', 'stockbook', 'accounting']; // ✅ ADDED 'accounting'
 
 // Validate page
 if (!in_array($page, $allowedPages)) {
@@ -25,6 +25,9 @@ if (!in_array($page, $allowedPages)) {
 switch ($page) {
     case 'stockbook':
         require_once __DIR__ . '/../views/stockbook.php';
+        break;
+    case 'accounting': // ✅ NEW ROUTE
+        require_once __DIR__ . '/../views/accounting/list.php';
         break;
     case 'dashboard':
     default:

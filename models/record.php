@@ -164,5 +164,31 @@ class Record {
         
         return $result && pg_num_rows($result) > 0;
     }
+    /**
+     * ✅ NEW: Get accounting summary for a record
+     */
+    public function getAccountingSummary($recordId, $userId) {
+        // Verify record belongs to user
+        $record = $this->getById($recordId, $userId);
+        if (!$record) {
+            return null;
+        }
+        
+        $query = "SELECT 
+                    COUNT(*) as total_entries,
+                    COALESCE(SUM(quantity_in), 0) as total_in,
+                    COALESCE(SUM(quantity_out), 0) as total_out,
+                    COALESCE(MAX(balance), 0) as current_balance
+                  FROM stock_accounting 
+                  WHERE record_id = $1";
+        
+        $result = pg_query_params($this->conn, $query, [$recordId]);
+        
+        if ($result) {
+            return pg_fetch_assoc($result);
+        }
+        
+        return null;
+    }
 }
 ?>

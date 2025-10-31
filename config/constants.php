@@ -37,6 +37,15 @@ define('GAUGES', [
     '0.35',
 ]);
 
+// ✅ NEW: Accounting entry types
+define('ACCOUNTING_ENTRY_TYPES', [
+    'Inflow',
+    'Outflow',
+    'Adjustment',
+    'Transfer',
+    'Return'
+]);
+
 // Application settings
 define('APP_NAME', 'Stock System');
 define('APP_VERSION', '1.0.0');

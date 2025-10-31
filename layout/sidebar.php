@@ -17,5 +17,9 @@ $currentPage = $_GET['page'] ?? 'dashboard';
         <a class="nav-link <?php echo $currentPage === 'stockbook' ? 'active' : ''; ?>" href="index.php?page=stockbook">
             <i class="bi bi-journal-text"></i> Stock Book
         </a>
+        <!-- ✅ NEW MENU ITEM -->
+        <a class="nav-link <?php echo $currentPage === 'accounting' ? 'active' : ''; ?>" href="index.php?page=accounting">
+            <i class="bi bi-calculator"></i> Stock Accounting
+        </a>
     </nav>
 </div>

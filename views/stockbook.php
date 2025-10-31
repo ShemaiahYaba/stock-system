@@ -308,5 +308,58 @@ $flash = getFlash();
     </div>
 </div>
 <?php endforeach; ?>
+<!-- ✅ NEW: Accounting Modals for each record -->
+<?php foreach ($records as $record): ?>
+<div class="modal fade" id="accountingModal<?php echo $record['id']; ?>" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-calculator"></i> Accounting: <?php echo htmlspecialchars($record['code']); ?>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <strong>Record:</strong> <?php echo htmlspecialchars($record['code']); ?> | 
+                    <strong>Color:</strong> <?php echo htmlspecialchars($record['color']); ?> | 
+                    <strong>Gauge:</strong> <?php echo htmlspecialchars($record['gauge']); ?>
+                </div>
+                
+                <!-- Accounting entries will be loaded here via AJAX or PHP include -->
+                <div id="accountingEntries<?php echo $record['id']; ?>">
+                    <p class="text-center text-muted py-4">
+                        <i class="bi bi-hourglass-split"></i> Loading accounting entries...
+                    </p>
+                </div>
+                
+                <div class="text-end mt-3">
+                    <a href="index.php?page=accounting&record_id=<?php echo $record['id']; ?>" class="btn btn-primary">
+                        <i class="bi bi-box-arrow-up-right"></i> View Full Accounting
+                    </a>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endforeach; ?>
+
+<script>
+// ✅ Load accounting entries when modal opens
+document.addEventListener('DOMContentLoaded', function() {
+    <?php foreach ($records as $record): ?>
+    var modal<?php echo $record['id']; ?> = document.getElementById('accountingModal<?php echo $record['id']; ?>');
+    modal<?php echo $record['id']; ?>.addEventListener('show.bs.modal', function() {
+        // TODO: Load accounting entries via AJAX or server-side include
+        // For now, show placeholder
+        document.getElementById('accountingEntries<?php echo $record['id']; ?>').innerHTML = 
+            '<p class="text-muted text-center">No accounting entries yet. <a href="index.php?page=accounting&record_id=<?php echo $record['id']; ?>">Add first entry</a></p>';
+    });
+    <?php endforeach; ?>
+});
+</script>
 
 <?php include __DIR__ . '/../layout/footer.php'; ?>

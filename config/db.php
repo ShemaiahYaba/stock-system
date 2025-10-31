@@ -2,11 +2,11 @@
 // Database configuration using Supabase
 // Replace these values with your Supabase connection details
 
-define('DB_HOST', 'db.vrbcpkbmudskosfirbrf.supabase.co');
+define('DB_HOST', 'aws-1-eu-west-1.pooler.supabase.com');
 define('DB_PORT', '5432');
 define('DB_NAME', 'postgres');
-define('DB_USER', 'postgres');
-define('DB_PASS', 'testing-123');
+define('DB_USER', 'postgres.tjdimldgwxfnvoscexhw');
+define('DB_PASS', 'test-123');
 
 // Create connection string
 $connection_string = sprintf(

@@ -18,6 +18,11 @@ function renderActionButtons($id, $code) {
     echo '<i class="bi bi-pencil"></i>';
     echo '</a>';
     
+    // ✅ NEW: Accounting button
+    echo '<button type="button" class="btn btn-primary btn-action" data-bs-toggle="modal" data-bs-target="#accountingModal' . $id . '" title="Accounting">';
+    echo '<i class="bi bi-calculator"></i>';
+    echo '</button>';
+    
     // Delete button
     echo '<button type="button" class="btn btn-danger btn-action" onclick="confirmDelete(' . $id . ', \'' . addslashes($code) . '\')" title="Delete">';
     echo '<i class="bi bi-trash"></i>';
