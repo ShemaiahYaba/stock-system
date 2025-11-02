@@ -1,4 +1,5 @@
 <?php
+// controllers/records/CRUD/read.php
 // Read records controller
 
 require_once __DIR__ . '/../../../config/db.php';
@@ -14,25 +15,31 @@ if (session_status() === PHP_SESSION_NONE) {
 checkAuth();
 
 $recordModel = new Record($conn);
+$stockTypeId = isset($_GET['type']) ? intval($_GET['type']) : null;
 
 /**
- * Get all records for current user
+ * Get all records for current user, optionally filtered by stock type
  */
-function getAllRecords($recordModel) {
-    return $recordModel->getAll(getCurrentUserId());
+function getAllRecords($recordModel, $stockTypeId = null) {
+    return $recordModel->getAll(getCurrentUserId(), $stockTypeId);
 }
 
 /**
  * Get single record by ID
  */
 function getRecordById($recordModel, $id) {
-    return $recordModel->getById($id, getCurrentUserId());
+    $userId = getCurrentUserId();
+    error_log("Getting record ID: $id for user ID: $userId");
+    $record = $recordModel->getById($id, $userId);
+    if (!$record) {
+        error_log("Record not found or access denied. User ID: $userId, Record ID: $id");
+    }
+    return $record;
 }
 
 /**
- * Get total records count
+ * Get total records count, optionally filtered by stock type
  */
-function getTotalRecords($recordModel) {
-    return $recordModel->count(getCurrentUserId());
+function getTotalRecords($recordModel, $stockTypeId = null) {
+    return $recordModel->count(getCurrentUserId(), $stockTypeId);
 }
-?>

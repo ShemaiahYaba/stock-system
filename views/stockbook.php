@@ -1,10 +1,19 @@
 <!-- /views/stockbook.php -->
 <?php
 require_once __DIR__ . '/../config/constants.php';
+require_once __DIR__ . '/../config/db.php'; // Include database connection
 require_once __DIR__ . '/../controllers/records/index.php';
 require_once __DIR__ . '/../layout/table-item.php';
 
+// views/stockbook.php - Update near the top of the file
 $pageTitle = 'Stock Book';
+$stockTypeName = 'All Stock Types';
+
+// Get stock type name if filtering by type
+if (isset($_GET['type']) && $stockType = $conn->query("SELECT name FROM stock_types WHERE id = " . intval($_GET['type']))->fetch_assoc()) {
+    $pageTitle = $stockType['name'] . ' Stock';
+    $stockTypeName = $stockType['name'] . ' Stock';
+}
 
 // Handle actions
 $action = $_GET['action'] ?? '';
@@ -25,8 +34,9 @@ if ($action === 'edit') {
     $editRecord = getRecordForEdit($recordModel, $recordId);
 }
 
-// Get all records
-$records = getAllRecords($recordModel);
+// Get records based on stock type filter
+$stockTypeId = isset($_GET['type']) ? intval($_GET['type']) : null;
+$records = getAllRecords($recordModel, $stockTypeId);
 $flash = getFlash();
 ?>
 
@@ -39,9 +49,9 @@ $flash = getFlash();
 <div class="main-content">
     <div class="container-fluid p-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2><i class="bi bi-journal-text"></i> Stock Book</h2>
+            <h2><i class="bi bi-journal-text"></i> <?php echo htmlspecialchars($pageTitle); ?></h2>
             <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addModal">
-                <i class="bi bi-plus-circle"></i> Add New Record
+                <i class="bi bi-plus-circle"></i> Add New Stock
             </button>
         </div>
         
@@ -58,10 +68,10 @@ $flash = getFlash();
             <div class="card">
                 <div class="card-body text-center py-5">
                     <i class="bi bi-inbox fs-1 text-muted"></i>
-                    <h4 class="mt-3">No Records Found</h4>
-                    <p class="text-muted">Start by adding your first stock record</p>
+                    <h4 class="mt-3">No Stock Found</h4>
+                    <p class="text-muted">Start by adding your first stock</p>
                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
-                        <i class="bi bi-plus-circle"></i> Add Record
+                        <i class="bi bi-plus-circle"></i> Add New Stock
                     </button>
                 </div>
             </div>
@@ -75,7 +85,7 @@ $flash = getFlash();
                             <th>COLOR</th>
                             <th>NET WEIGHT (KG)</th>
                             <th>GAUGE</th>
-                            <th>SALES STATUS</th>
+                            <th>STATUS</th>
                             <th>NO. OF METERS</th>
                             <th>ACTIONS</th>
                         </tr>
@@ -105,7 +115,7 @@ $flash = getFlash();
             <form method="POST" action="index.php?page=stockbook&action=create">
                 <input type="hidden" name="action" value="create">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="addModalLabel">Add New Record</h5>
+                    <h5 class="modal-title" id="addModalLabel">Add New Stock</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -113,6 +123,23 @@ $flash = getFlash();
                         <label for="code" class="form-label">Code *</label>
                         <input type="text" class="form-control" id="code" name="code" 
                                value="<?php echo generateCode(); ?>" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="stock_type_id" class="form-label">Stock Type *</label>
+                        <select class="form-select" id="stock_type_id" name="stock_type_id" required>
+                            <option value="">Select Stock Type</option>
+                            <?php 
+                            // Get stock types from database
+                            $stockTypes = [];
+                            $result = $db->query("SELECT id, name FROM stock_types ORDER BY name");
+                            if ($result) {
+                                while ($row = $result->fetch_assoc()) {
+                                    echo '<option value="' . $row['id'] . '">' . htmlspecialchars($row['name']) . '</option>';
+                                }
+                            }
+                            ?>
+                        </select>
                     </div>
                     
                     <div class="mb-3">
@@ -141,7 +168,7 @@ $flash = getFlash();
                     </div>
                     
                     <div class="mb-3">
-                        <label for="sales_status" class="form-label">Sales Status *</label>
+                        <label for="sales_status" class="form-label">Stock Status *</label>
                         <select class="form-select" id="sales_status" name="sales_status" required>
                             <option value="">Select Status</option>
                             <?php foreach (SALE_STATUSES as $status): ?>
@@ -158,7 +185,7 @@ $flash = getFlash();
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-success">
-                        <i class="bi bi-check-circle"></i> Add Record
+                        <i class="bi bi-check-circle"></i> Add Stock
                     </button>
                 </div>
             </form>
@@ -175,7 +202,7 @@ $flash = getFlash();
                 <input type="hidden" name="action" value="update">
                 <input type="hidden" name="id" value="<?php echo $editRecord['id']; ?>">
                 <div class="modal-header">
-                    <h5 class="modal-title">Edit Record</h5>
+                    <h5 class="modal-title">Edit Stock</h5>
                     <a href="index.php?page=stockbook" class="btn-close"></a>
                 </div>
                 <div class="modal-body">
@@ -183,6 +210,22 @@ $flash = getFlash();
                         <label class="form-label">Code</label>
                         <input type="text" class="form-control" value="<?php echo htmlspecialchars($editRecord['code']); ?>" disabled>
                         <small class="text-muted">Code cannot be changed</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_stock_type_id" class="form-label">Stock Type *</label>
+                        <select class="form-select" id="edit_stock_type_id" name="stock_type_id" required>
+                            <?php 
+                            // Get stock types from database
+                            $result = $db->query("SELECT id, name FROM stock_types ORDER BY name");
+                            if ($result) {
+                                while ($row = $result->fetch_assoc()) {
+                                    $selected = ($row['id'] == $editRecord['stock_type_id']) ? 'selected' : '';
+                                    echo '<option value="' . $row['id'] . '" ' . $selected . '>' . htmlspecialchars($row['name']) . '</option>';
+                                }
+                            }
+                            ?>
+                        </select>
                     </div>
                     
                     <div class="mb-3">
@@ -233,7 +276,7 @@ $flash = getFlash();
                 <div class="modal-footer">
                     <a href="index.php?page=stockbook" class="btn btn-secondary">Cancel</a>
                     <button type="submit" class="btn btn-warning">
-                        <i class="bi bi-check-circle"></i> Update Record
+                        <i class="bi bi-check-circle"></i> Update Stock
                     </button>
                 </div>
             </form>
@@ -248,7 +291,7 @@ $flash = getFlash();
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Record Details</h5>
+                <h5 class="modal-title">Stock Details</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">

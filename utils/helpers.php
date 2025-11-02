@@ -69,8 +69,8 @@ function getCurrentUserEmail() {
 /**
  * Generate random code
  */
-function generateCode($prefix = 'STK', $length = 6) {
-    return $prefix . '-' . strtoupper(bin2hex(random_bytes($length / 2)));
+function generateCode($prefix = '', $length = 6) {
+    // return $prefix . '-' . strtoupper(bin2hex(random_bytes($length / 2)));
 }
 
 /**
@@ -78,6 +78,17 @@ function generateCode($prefix = 'STK', $length = 6) {
  */
 function isValidEmail($email) {
     return filter_var($email, FILTER_VALIDATE_EMAIL);
+}
+
+/**
+ * Format date for display
+ */
+function formatDate($dateString, $format = 'd M Y H:i') {
+    if (empty($dateString)) {
+        return '-';
+    }
+    $date = new DateTime($dateString);
+    return $date->format($format);
 }
 
 /**

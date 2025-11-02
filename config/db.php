@@ -1,30 +1,24 @@
 <?php
-// Database configuration using Supabase
-// Replace these values with your Supabase connection details
+// Database configuration for MySQL
+// Replace these values with your MySQL connection details
 
-define('DB_HOST', 'aws-1-eu-west-1.pooler.supabase.com');
-define('DB_PORT', '5432');
-define('DB_NAME', 'postgres');
-define('DB_USER', 'postgres.tjdimldgwxfnvoscexhw');
-define('DB_PASS', 'test-123');
-
-// Create connection string
-$connection_string = sprintf(
-    "host=%s port=%s dbname=%s user=%s password=%s",
-    DB_HOST,
-    DB_PORT,
-    DB_NAME,
-    DB_USER,
-    DB_PASS
-);
+define('DB_HOST', 'localhost');
+define('DB_USER', 'root');
+define('DB_PASS', '');
+define('DB_NAME', 'inventory_management');
 
 // Establish connection
 try {
-    $conn = pg_connect($connection_string);
+    $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
     
-    if (!$conn) {
-        throw new Exception("Failed to connect to database");
+    // Check connection
+    if ($conn->connect_error) {
+        throw new Exception("Connection failed: " . $conn->connect_error);
     }
+    
+    // Set charset to utf8mb4 for proper encoding
+    $conn->set_charset("utf8mb4");
+    
 } catch (Exception $e) {
     die("Database Connection Error: " . $e->getMessage());
 }

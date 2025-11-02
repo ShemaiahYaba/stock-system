@@ -9,16 +9,19 @@ $totalRecords = getTotalRecords($recordModel);
 $records = getAllRecords($recordModel);
 
 // Calculate statistics
-$availableCount = 0;
-$soldCount = 0;
+$factoryCount = 0;
+$inUseCount = 0;
+$soldOutCount = 0;
 $totalMeters = 0;
 $totalWeight = 0;
 
 foreach ($records as $record) {
-    if ($record['sales_status'] === 'Available') {
-        $availableCount++;
-    } elseif ($record['sales_status'] === 'Sold') {
-        $soldCount++;
+    if ($record['sales_status'] === 'factory use') {
+        $factoryCount++;
+    } elseif ($record['sales_status'] === 'in production') {
+        $inUseCount++;
+    } elseif ($record['sales_status'] === 'sold out') {
+        $soldOutCount++;
     }
     $totalMeters += floatval($record['no_of_meters']);
     $totalWeight += floatval($record['net_weight']);
@@ -46,59 +49,17 @@ $flash = getFlash();
             </div>
         <?php endif; ?>
         
-        <!-- Statistics Cards -->
+        <!-- Statistics Card -->
         <div class="row g-4 mb-4">
             <div class="col-md-3">
                 <div class="card text-white bg-primary">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="card-title text-uppercase mb-1">Total Records</h6>
+                                <h6 class="card-title text-uppercase mb-1">No. Of Coils in Stock</h6>
                                 <h2 class="mb-0"><?php echo $totalRecords; ?></h2>
                             </div>
                             <i class="bi bi-journal-text fs-1 opacity-50"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-3">
-                <div class="card text-white bg-success">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="card-title text-uppercase mb-1">Available</h6>
-                                <h2 class="mb-0"><?php echo $availableCount; ?></h2>
-                            </div>
-                            <i class="bi bi-check-circle fs-1 opacity-50"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-3">
-                <div class="card text-white bg-secondary">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="card-title text-uppercase mb-1">Sold</h6>
-                                <h2 class="mb-0"><?php echo $soldCount; ?></h2>
-                            </div>
-                            <i class="bi bi-cart-check fs-1 opacity-50"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-3">
-                <div class="card text-white bg-info">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="card-title text-uppercase mb-1">Total Meters</h6>
-                                <h2 class="mb-0"><?php echo formatNumber($totalMeters); ?></h2>
-                            </div>
-                            <i class="bi bi-rulers fs-1 opacity-50"></i>
                         </div>
                     </div>
                 </div>
@@ -115,7 +76,7 @@ $flash = getFlash();
                             <i class="bi bi-journal-text"></i> View Stock Book
                         </a>
                         <a href="index.php?page=stockbook&action=create" class="btn btn-success">
-                            <i class="bi bi-plus-circle"></i> Add New Record
+                            <i class="bi bi-plus-circle"></i> Add New Stock
                         </a>
                     </div>
                 </div>
@@ -128,7 +89,7 @@ $flash = getFlash();
             <div class="col-md-12">
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="card-title mb-3">Recent Records</h5>
+                        <h5 class="card-title mb-3">Recent Stock</h5>
                         <div class="table-responsive">
                             <table class="table table-hover">
                                 <thead>

@@ -15,13 +15,22 @@ function renderTableItem($record, $index) {
     
     // Status badge color
     $statusColors = [
-        'Available' => 'success',
-        'Sold' => 'secondary',
-        'Reserved' => 'warning',
-        'Pending' => 'info',
-        'Out of Stock' => 'danger'
+        'factory use' => 'success',     // Green
+        'in production' => 'warning',   // Yellow
+        'sold out' => 'secondary'       // Grey
     ];
-    $statusColor = $statusColors[$record['sales_status']] ?? 'secondary';
+    
+    // Get the status from record and ensure it matches the exact case
+    $status = strtolower(trim($record['sales_status']));
+    $statusColor = 'secondary';  // Default color if no match
+    
+    // Find matching status with case-insensitive comparison
+    foreach ($statusColors as $key => $statusColorValue) {
+        if (strtolower($key) === $status) {
+            $statusColor = $statusColorValue;
+            break;
+        }
+    }
     
     echo "<tr>";
     echo "<td>{$index}</td>";
@@ -32,8 +41,8 @@ function renderTableItem($record, $index) {
     echo "<td><span class='badge bg-{$statusColor}'>{$salesStatus}</span></td>";
     echo "<td>{$noOfMeters}</td>";
     echo "<td>";
-    include __DIR__ . '/quick-action-buttons.php';
-    renderActionButtons($id, $code);
+    include_once __DIR__ . '/quick-action-buttons.php';
+    renderActionButtons($id, $code, $record['sales_status']);
     echo "</td>";
     echo "</tr>";
 }

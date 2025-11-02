@@ -4,6 +4,7 @@
 require_once __DIR__ . '/../../../config/db.php';
 require_once __DIR__ . '/../../../config/constants.php';
 require_once __DIR__ . '/../../../models/accounting.php';
+require_once __DIR__ . '/../../../models/record.php';
 require_once __DIR__ . '/../../../utils/helpers.php';
 require_once __DIR__ . '/../../../utils/authMiddleware.php';
 
@@ -14,18 +15,21 @@ if (session_status() === PHP_SESSION_NONE) {
 checkAuth();
 
 $accountingModel = new Accounting($conn);
+$recordModel = new Record($conn);
 
 /**
  * Handle accounting entry update
  */
-function handleUpdateAccounting($accountingModel) {
+function handleUpdateAccounting($accountingModel, $recordModel) {
     $errors = [];
+    $userId = $_SESSION['user_id'];
     
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_accounting') {
         $id = intval($_POST['id'] ?? 0);
-        $entryDate = sanitize($_POST['entry_date'] ?? '');
-        $quantityIn = sanitize($_POST['quantity_in'] ?? '0');
-        $quantityOut = sanitize($_POST['quantity_out'] ?? '0');
+        $recordId = intval($_POST['record_id'] ?? 0);
+        $entryDate = sanitize($_POST['entry_date'] ?? date('Y-m-d'));
+        $transactionType = sanitize($_POST['transaction_type'] ?? '');
+        $quantity = floatval($_POST['quantity'] ?? 0);
         $remarks = sanitize($_POST['remarks'] ?? '');
         
         // Validation
@@ -33,82 +37,73 @@ function handleUpdateAccounting($accountingModel) {
             $errors[] = 'Invalid entry ID';
         }
         
+        if ($recordId <= 0) {
+            $errors[] = 'Invalid record ID';
+        }
+        
         if (empty($entryDate)) {
             $errors[] = 'Entry date is required';
         }
         
-        if (!is_numeric($quantityIn) || floatval($quantityIn) < 0) {
-            $errors[] = 'Valid quantity in is required (must be 0 or positive)';
+        if (!in_array($transactionType, ['inflow', 'outflow'])) {
+            $errors[] = 'Invalid transaction type';
         }
         
-        if (!is_numeric($quantityOut) || floatval($quantityOut) < 0) {
-            $errors[] = 'Valid quantity out is required (must be 0 or positive)';
+        if (!is_numeric($quantity) || $quantity <= 0) {
+            $errors[] = 'Valid quantity is required (must be greater than 0)';
         }
         
-        if (floatval($quantityIn) == 0 && floatval($quantityOut) == 0) {
-            $errors[] = 'Either quantity in or quantity out must be greater than 0';
+        // Check if record exists and belongs to user
+        $record = $recordModel->getById($recordId, $userId);
+        if (!$record) {
+            $errors[] = 'Record not found or access denied';
         }
         
-        // Get existing entry to calculate balance
         if (empty($errors)) {
-            $existingEntry = $accountingModel->getById($id, getCurrentUserId());
-            if (!$existingEntry) {
-                $errors[] = 'Entry not found';
-            }
-        }
-        
-        // Calculate new balance (simplified - just recalculate based on current in/out)
-        if (empty($errors)) {
-            // Get all entries for the record except this one
-            $recordId = $existingEntry['record_id'];
-            $entries = $accountingModel->getByRecordId($recordId, getCurrentUserId());
-            
-            $runningBalance = 0;
-            foreach ($entries as $entry) {
-                if ($entry['id'] != $id) {
-                    $runningBalance += floatval($entry['quantity_in']) - floatval($entry['quantity_out']);
+            // Get current entry to verify ownership
+            $currentEntry = $accountingModel->getById($id, $userId);
+            if (!$currentEntry) {
+                $errors[] = 'Entry not found or access denied';
+            } else {
+                // Calculate new balance
+                $previousBalance = $accountingModel->getBalanceBefore($recordId, $id);
+                $newBalance = $previousBalance;
+                
+                if ($transactionType === 'inflow') {
+                    $newBalance += $quantity;
+                } else {
+                    $newBalance -= $quantity;
+                    
+                    // Check if we have enough stock
+                    if ($newBalance < 0) {
+                        $errors[] = 'Cannot remove more quantity than available';
+                    }
+                }
+                
+                if (empty($errors)) {
+                    // Update entry
+                    $result = $accountingModel->update($id, $userId, [
+                        'entry_date' => $entryDate,
+                        'transaction_type' => $transactionType,
+                        'quantity' => $quantity,
+                        'balance' => $newBalance,
+                        'remarks' => $remarks
+                    ]);
+                    
+                    if ($result['success']) {
+                        setFlash('Accounting entry updated successfully', FLASH_SUCCESS);
+                        redirect('index.php?page=accounting&record_id=' . $recordId);
+                    } else {
+                        $errors[] = $result['message'] ?? 'Failed to update accounting entry';
+                    }
                 }
             }
-            
-            // Add the new values
-            $newBalance = $runningBalance + floatval($quantityIn) - floatval($quantityOut);
-            
-            if ($newBalance < 0) {
-                $errors[] = 'Cannot remove more quantity than available';
-            }
         }
         
-        // Update if no errors
-        if (empty($errors)) {
-            $data = [
-                'entry_date' => $entryDate,
-                'quantity_in' => $quantityIn,
-                'quantity_out' => $quantityOut,
-                'balance' => $newBalance,
-                'remarks' => $remarks
-            ];
-            
-            $result = $accountingModel->update($id, getCurrentUserId(), $data);
-            
-            if ($result['success']) {
-                setFlash('Accounting entry updated successfully', FLASH_SUCCESS);
-                redirect('index.php?page=accounting&record_id=' . $existingEntry['record_id']);
-            } else {
-                $errors[] = $result['message'];
-            }
-        }
+        return $errors;
     }
     
-    return $errors;
+    return [];
 }
 
-/**
- * Get accounting entry for editing
- */
-function getAccountingForEdit($accountingModel, $id) {
-    if ($id) {
-        return $accountingModel->getById($id, getCurrentUserId());
-    }
-    return null;
-}
 ?>

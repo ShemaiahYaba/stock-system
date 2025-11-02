@@ -2,10 +2,14 @@
 <?php
 /**
  * Reusable quick action buttons component
- * Usage: renderActionButtons($id, $code);
+ * Usage: renderActionButtons($id, $code, $status = '');
+ * 
+ * @param int $id Record ID
+ * @param string $code Item code
+ * @param string $status Current status of the record
  */
 
-function renderActionButtons($id, $code) {
+function renderActionButtons($id, $code, $status = '') {
     echo '<div class="btn-group btn-group-sm" role="group">';
     
     // View button
@@ -18,10 +22,12 @@ function renderActionButtons($id, $code) {
     echo '<i class="bi bi-pencil"></i>';
     echo '</a>';
     
-    // ✅ NEW: Accounting button
-    echo '<button type="button" class="btn btn-primary btn-action" data-bs-toggle="modal" data-bs-target="#accountingModal' . $id . '" title="Accounting">';
-    echo '<i class="bi bi-calculator"></i>';
-    echo '</button>';
+    // Accounting button - Only show for 'factory use' status
+    if (strtolower(trim($status)) === 'factory use') {
+        echo '<a href="index.php?page=accounting&record_id=' . $id . '" class="btn btn-primary btn-action" title="Accounting">';
+        echo '<i class="bi bi-calculator"></i>';
+        echo '</a>';
+    }
     
     // Delete button
     echo '<button type="button" class="btn btn-danger btn-action" onclick="confirmDelete(' . $id . ', \'' . addslashes($code) . '\')" title="Delete">';

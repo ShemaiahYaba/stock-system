@@ -16,14 +16,15 @@ class User {
      */
     public function createTable() {
         $query = "CREATE TABLE IF NOT EXISTS users (
-            id SERIAL PRIMARY KEY,
+            id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
-            email VARCHAR(255) UNIQUE NOT NULL,
+            email VARCHAR(255) NOT NULL,
             password VARCHAR(255) NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )";
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY unique_email (email)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
         
-        return pg_query($this->conn, $query);
+        return $this->conn->query($query);
     }
     
     /**
@@ -39,15 +40,15 @@ class User {
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
         
         // Insert user
-        $query = "INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id";
-        $result = pg_query_params($this->conn, $query, [$name, $email, $hashedPassword]);
+        $query = "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("sss", $name, $email, $hashedPassword);
         
-        if ($result) {
-            $row = pg_fetch_assoc($result);
-            return ['success' => true, 'user_id' => $row['id']];
+        if ($stmt->execute()) {
+            return ['success' => true, 'user_id' => $this->conn->insert_id];
         }
         
-        return ['success' => false, 'message' => 'Registration failed'];
+        return ['success' => false, 'message' => 'Registration failed: ' . $this->conn->error];
     }
     
     /**
@@ -61,13 +62,11 @@ class User {
         }
         
         if (password_verify($password, $user['password'])) {
+            // Remove password from user data before returning
+            unset($user['password']);
             return [
                 'success' => true,
-                'user' => [
-                    'id' => $user['id'],
-                    'name' => $user['name'],
-                    'email' => $user['email']
-                ]
+                'user' => $user
             ];
         }
         
@@ -78,11 +77,14 @@ class User {
      * Find user by email
      */
     public function findByEmail($email) {
-        $query = "SELECT * FROM users WHERE email = $1";
-        $result = pg_query_params($this->conn, $query, [$email]);
+        $query = "SELECT * FROM users WHERE email = ?";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
         
-        if ($result && pg_num_rows($result) > 0) {
-            return pg_fetch_assoc($result);
+        if ($result && $result->num_rows > 0) {
+            return $result->fetch_assoc();
         }
         
         return null;
@@ -92,11 +94,14 @@ class User {
      * Find user by ID
      */
     public function findById($id) {
-        $query = "SELECT * FROM users WHERE id = $1";
-        $result = pg_query_params($this->conn, $query, [$id]);
+        $query = "SELECT * FROM users WHERE id = ?";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
         
-        if ($result && pg_num_rows($result) > 0) {
-            return pg_fetch_assoc($result);
+        if ($result && $result->num_rows > 0) {
+            return $result->fetch_assoc();
         }
         
         return null;

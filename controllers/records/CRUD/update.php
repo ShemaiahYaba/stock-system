@@ -23,6 +23,7 @@ function handleUpdateRecord($recordModel) {
     
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update') {
         $id = intval($_POST['id'] ?? 0);
+        $stockTypeId = intval($_POST['stock_type_id'] ?? 0);
         $color = sanitize($_POST['color'] ?? '');
         $netWeight = sanitize($_POST['net_weight'] ?? '');
         $gauge = sanitize($_POST['gauge'] ?? '');
@@ -32,6 +33,10 @@ function handleUpdateRecord($recordModel) {
         // Validation
         if ($id <= 0) {
             $errors[] = 'Invalid record ID';
+        }
+        
+        if ($stockTypeId <= 0) {
+            $errors[] = 'Stock type is required';
         }
         
         if (empty($color)) {
@@ -57,6 +62,7 @@ function handleUpdateRecord($recordModel) {
         // Update if no errors
         if (empty($errors)) {
             $data = [
+                'stock_type_id' => $stockTypeId,
                 'color' => $color,
                 'net_weight' => $netWeight,
                 'gauge' => $gauge,

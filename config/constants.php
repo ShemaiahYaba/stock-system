@@ -18,16 +18,19 @@ define('COLORS', [
     'Beige',
     'Navy',
     'Maroon',
-    'Teal'
+    'Teal',
+    'Tri-Color',
+    'Fire-Color',
+    'Silver-Color',
+    'Blue-Fean',
+    'Faint-Beige',
 ]);
 
 // Sales status options
 define('SALE_STATUSES', [
-    'Available',
-    'Sold',
-    'Reserved',
-    'Pending',
-    'Out of Stock'
+    'factory use',
+    'in production',
+    'sold out'
 ]);
 
 // Gauge options (thickness measurements)
@@ -35,6 +38,8 @@ define('GAUGES', [
     '0.55',
     '0.45',
     '0.35',
+    '0.53',
+    '0.51',
 ]);
 
 // ✅ NEW: Accounting entry types
